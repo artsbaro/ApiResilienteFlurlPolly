@@ -1,4 +1,6 @@
+using BffResilienteFlurlPolly;
 using BffResilienteFlurlPolly.Services;
+using Flurl.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+FlurlHttp.Configure(settings => settings.HttpClientFactory = new PollyHttpClientFactory());
 
 builder.Services.AddScoped<IPessoaService, PessoaService>();
 var app = builder.Build();

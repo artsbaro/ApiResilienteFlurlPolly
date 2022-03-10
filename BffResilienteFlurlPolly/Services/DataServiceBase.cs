@@ -1,39 +1,50 @@
 ﻿using Flurl.Http;
 using Polly;
 using Polly.Retry;
+using Polly.Timeout;
 
 namespace BffResilienteFlurlPolly.Services
 {
     public abstract class DataServiceBase
     {
-        // Esse método pode ir para uma classe base
         protected AsyncRetryPolicy BuildRetryPolicy()
         {
             var retryPolicy = Policy
                .Handle<FlurlHttpException>(IsTransientError)
-               .WaitAndRetryAsync(new[]
-               {
-                   TimeSpan.FromSeconds(1),
-                   TimeSpan.FromSeconds(2),
-                   TimeSpan.FromSeconds(3)
-               }, (exception, timeSpan, retryCount, context) =>
-               {
-                   Console.WriteLine("#########");
-                   Console.WriteLine($"Exception captada {exception}");
-                   Console.WriteLine("#########");
-                   Console.WriteLine("");
-
-                   Console.WriteLine($"Tentativa {retryCount} com tempo de espera de {timeSpan} para executar a próxima tentativa");
-
-                   Console.WriteLine("");
-                   Console.WriteLine("#########");
-                   Console.WriteLine("");
-               });
+                .WaitAndRetryAsync(
+                    3,
+                    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    (exception, timeSpan, retryCount, context) =>
+                    {
+                        Console.WriteLine($"TENTATIVA: {retryCount}");
+                        Console.WriteLine($"TEMPO: {timeSpan}");
+                        Console.WriteLine($"CONTEXT: {context}");
+                        Console.WriteLine("##########");
+                        Console.WriteLine(exception);
+                        Console.WriteLine("##########");
+                        Console.WriteLine("");
+                        Console.WriteLine("");
+                    }
+                  );
 
             return retryPolicy;
         }
 
-        // Esse método pode ir para uma classe base
+        protected AsyncTimeoutPolicy BuildTimeoutPolicy()
+        {
+            var timeoutPolicy = Policy
+                .TimeoutAsync(30,
+                        onTimeoutAsync: (context, timespan, task) =>
+                        {
+                            Console.WriteLine($"TIMESPAN: {timespan}");
+                            return Task.CompletedTask;
+                        });
+
+            return timeoutPolicy;
+        }
+
+
+
         private bool IsTransientError(FlurlHttpException exception)
         {
             int[] httpStatusCodesWorthRetrying =

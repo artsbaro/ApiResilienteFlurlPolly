@@ -7,13 +7,16 @@ namespace BffResilienteFlurlPolly.Services
     {
         public async Task<IEnumerable<Pessoa>> GetPessoas()
         {
-            return await BuildRetryPolicy().ExecuteAsync(() => 
+            var result = await
                          "http://localhost:5212/Pessoa"
                         .WithHeader("accept", "application/json")
                         .WithHeader("content-type", "application/json")
                         //.WithBasicAuth("username", "password")
                         //.WithOAuthBearerToken("mytoken")
-                        .GetJsonAsync<IEnumerable<Pessoa>>());
+                        .GetAsync();
+
+           return await result.GetJsonAsync<IEnumerable<Pessoa>>();
+            //return result.ReceiveJson<IEnumerable<Pessoa>>();
         }
     }
 }

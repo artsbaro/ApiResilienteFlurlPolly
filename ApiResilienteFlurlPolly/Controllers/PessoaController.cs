@@ -13,7 +13,7 @@ namespace ApiResilienteFlurlPolly.Controllers
 
         private readonly ILogger<PessoaController> _logger;
 
-        public PessoaController(ILogger<PessoaController> logger, 
+        public PessoaController(ILogger<PessoaController> logger,
             IPessoaService service)
         {
             _logger = logger;
@@ -22,10 +22,12 @@ namespace ApiResilienteFlurlPolly.Controllers
 
         [HttpGet(Name = "Pessoas")]
         [ProducesResponseType(typeof(IEnumerable<Pessoa>), StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Pessoa>> GetPessoas()
+        public async Task<ActionResult<IEnumerable<Pessoa>>> GetPessoas()
         {
-            var  pessoas = _service.GetPessoas();
-            return Ok(pessoas);
+            await Task.Delay(31000);
+            var pessoas = await Task.FromResult(_service.GetPessoas());
+            return new StatusCodeResult(503);
+            //return Ok(pessoas);
         }
     }
 }
